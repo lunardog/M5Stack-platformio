@@ -11,8 +11,7 @@
 #include <analogWrite.h>
 #endif
 
-const char *ssid = "subspace";
-const char *password = "1cedc0ffee";
+#include "wifi-password.h"
 
 #if defined(LED_BUILTIN)
 const int lampPin = LED_BUILTIN;

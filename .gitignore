@@ -2,3 +2,4 @@
 .piolibdeps
 .pio
 *.swp
+src/wifi-password.h
