@@ -7,10 +7,6 @@
 #include <WebThingAdapter.h>
 #include <M5Stack.h>
 
-#ifdef ESP32
-#include <analogWrite.h>
-#endif
-
 #include "wifi-password.h"
 
 #if defined(LED_BUILTIN)
@@ -24,7 +20,7 @@ ThingActionObject *action_generator(DynamicJsonDocument *);
 WebThingAdapter *adapter;
 
 const char *lampTypes[] = {"OnOffSwitch", "Light", nullptr};
-ThingDevice lamp("urn:dev:ops:my-lamp-1234", "My Lamp", lampTypes);
+ThingDevice lamp("urn:dev:ops:my-lamp-1234", "M5Stack", lampTypes);
 
 ThingProperty lampOn("on", "Whether the lamp is turned on", BOOLEAN,
                      "OnOffProperty");
@@ -40,6 +36,10 @@ ThingEvent overheated("overheated",
                       NUMBER, "OverheatedEvent");
 
 bool lastOn = true;
+
+void setScreenBrightness(uint8_t level) {
+  M5.Lcd.setBrightness(level);
+}
 
 void setup(void) {
   pinMode(lampPin, OUTPUT);
@@ -107,10 +107,6 @@ void setup(void) {
   M5.Lcd.print("/things/");
   M5.Lcd.println(lamp.id);
 
-#ifdef analogWriteRange
-  analogWriteRange(255);
-#endif
-
   // set initial values
   ThingPropertyValue initialOn = {.boolean = true};
   lampOn.setValue(initialOn);
@@ -120,7 +116,8 @@ void setup(void) {
   lampLevel.setValue(initialLevel);
   (void)lampLevel.changedValueOrNull();
 
-  analogWrite(lampPin, 128);
+  M5.Lcd.fillScreen(65535);
+  setScreenBrightness(128);
 
   randomSeed(analogRead(0));
 }
@@ -128,11 +125,12 @@ void setup(void) {
 void loop(void) {
   adapter->update();
   bool on = lampOn.getValue().boolean;
+  
   if (on) {
     int level = map(lampLevel.getValue().number, 0, 100, 255, 0);
-    analogWrite(lampPin, level);
+    setScreenBrightness(level);
   } else {
-    analogWrite(lampPin, 255);
+    setScreenBrightness(0);
   }
 
   if (lastOn != on) {
@@ -150,7 +148,7 @@ void do_fade(const JsonVariant &input) {
   ThingDataValue value = {.integer = brightness};
   lampLevel.setValue(value);
   int level = map(brightness, 0, 100, 255, 0);
-  analogWrite(lampPin, level);
+  setScreenBrightness(level);
 
   ThingDataValue val;
   val.number = 102;
